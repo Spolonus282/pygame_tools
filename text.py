@@ -3,10 +3,10 @@ pygame.init()
 
 __HasTyped = ''
 
-def text_display(prompt, fontSize, color1, color2, justify, coord,
-             transBack = False, antialiasing = True,
-             fontType = 'freesansbold.ttf'):
+def text_display(prompt, fontSize, color1, color2, justify, coord, transBack = False, antialiasing = True, fontType = 'freesansbold.ttf'):
     'Display text'
+    if justify == 'left': justify = 'topleft'
+    elif justify == 'right': justify = 'topright'
     fontObj = pygame.font.Font(fontType, fontSize)
     textObj = fontObj.render(prompt, antialiasing, color1, color2)
     if transBack: textObj.set_colorkey(color2)
@@ -21,7 +21,7 @@ def text_display(prompt, fontSize, color1, color2, justify, coord,
         rectObj.bottomleft = coord
     elif justify == 'bottomright':
         rectObj.bottomright = coord
-    
+
     return [textObj, rectObj]
 
 def get_typed(Key, maxlen):
@@ -178,16 +178,25 @@ def get_typed_numeric(Key, maxlen):
 	__HasTyped = Keys
     return Key
 
-class text_box():
-'''Hold a collection of text in one area. text won't wrap'''
-    def __init__(self, bounds, coords):
-        self.rect = Rect(coords,bounds)
-        self.text = []
-        self.tcol = (0,0,0)
-        self.bcol = (255,255,255)
-        self.size = 8
+class Text_box(Rect):
+'''Hold a collection of text in one area. input each line individually, or specify a line length'''
+    def __init__(self, bounds, coords, line_length = 0):
+        self.__line_length = line_length
+        self.__coord = (coords[0] + 5, coords[1])
+        self.__text = []
+        self.__justify = 'left'
+        self.__hold = []
+        self.text_color = (0,0,0)
+        self.back_color = (255,255,255)
+        self.font_size = 8
+        self.font_type = 'freesansbold.ttf'
+        self.transparent = False
+        super().__init__(coords, bounds)
     def add_line(self, text_line):
-        self.text.append(text_line)
-    def edit_text_attributes(self, text_color = (0,0,0), font_size = 8, backround_color = (255,255,255), justify = 'left'):
-
+        '''add only one line if you specified line_length. several if not'''###
+        self.__text.append(text_line)
+    def justify(self, justification = 'left'):
+        self.__justify = justification
     def render(self):
+        for t in self.__text:
+            self.__hold.append(text_display(t,self.font_size,self.text_color,self.back_color,self.__justify,self.__coord,self.transparent,True,self.font_type))
