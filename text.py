@@ -199,7 +199,7 @@ class Text_box(pygame.Rect):
         test_area = [0,len(text_line)+1]
         while True:
             temp = text_display(text_line[test_area[0]:test_area[1]],self.font_size,self.text_color,self.back_color,self.justify,(self.__coord[0]+self.margin,self.__coord[1]),self.transparent,True,self.font_type)
-            while(temp[1].w + self.margin > self.w):
+            while(temp[1].w + 2 * self.margin >= self.w):
                 test_area[1] -= 1
                 temp = text_display(text_line[test_area[0]:test_area[1]],self.font_size,self.text_color,self.back_color,self.justify,(self.__coord[0]+self.margin,self.__coord[1]),self.transparent,True,self.font_type)
             if test_area[1] != len(text_line)+1 and ' ' in text_line[test_area[0]:test_area[1]] and text_line[test_area[1]] != ' ' and text_line[test_area[1]-1] != ' ':
@@ -217,6 +217,7 @@ class Text_box(pygame.Rect):
         for b in self.__hold[2:]:
             c += 1
             b[1].y += a*c
+
     def render(self):
         if not self.transparent: pygame.draw.rect(self.__surface,self.back_color,self)
         return self.__hold
