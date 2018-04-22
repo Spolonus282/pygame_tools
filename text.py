@@ -175,16 +175,17 @@ def get_typed_numeric(Key, maxlen):
         elif Keys[pygame.K_COMMA] and not HasTyped[pygame.K_COMMA]: Key += '<'
         elif Keys[pygame.K_PERIOD] and not HasTyped[pygame.K_PERIOD]: Key += '>'
     while len(Key) > maxlen: Key = Key[:-1]
-	__HasTyped = Keys
+    __HasTyped = Keys
     return Key
 
-class Text_box(Rect):
-'''Hold a collection of text in one area. input each line individually, or specify a line length'''
-    def __init__(self, bounds, coords, line_length = 0):
-        self.__line_length = line_length
+class Text_box(pygame.Rect):
+    '''Hold a collection of text in one area.'''
+    def __init__(self, coords, bounds, surface):
+        self.__surface = surface
+        self.margin = 10
         self.__coord = (coords[0] + 5, coords[1])
         self.__text = []
-        self.__justify = 'left'
+        self.justify = 'left'
         self.__hold = []
         self.text_color = (0,0,0)
         self.back_color = (255,255,255)
@@ -192,11 +193,30 @@ class Text_box(Rect):
         self.font_type = 'freesansbold.ttf'
         self.transparent = False
         super().__init__(coords, bounds)
-    def add_line(self, text_line):
-        '''add only one line if you specified line_length. several if not'''###
-        self.__text.append(text_line)
-    def justify(self, justification = 'left'):
-        self.__justify = justification
+    def add_text(self, text_line):
+        '''add one long string of text, and it will be auto-formatted'''
+        self.__hold = []
+        test_area = [0,len(text_line)+1]
+        while True:
+            temp = text_display(text_line[test_area[0]:test_area[1]],self.font_size,self.text_color,self.back_color,self.justify,(self.__coord[0]+self.margin,self.__coord[1]),self.transparent,True,self.font_type)
+            while(temp[1].w + self.margin > self.w):
+                test_area[1] -= 1
+                temp = text_display(text_line[test_area[0]:test_area[1]],self.font_size,self.text_color,self.back_color,self.justify,(self.__coord[0]+self.margin,self.__coord[1]),self.transparent,True,self.font_type)
+            if test_area[1] != len(text_line)+1 and ' ' in text_line[test_area[0]:test_area[1]] and text_line[test_area[1]] != ' ' and text_line[test_area[1]-1] != ' ':
+                while text_line[test_area[1]-1] != ' ': test_area[1] -= 1
+            self.__hold.append(text_display(text_line[test_area[0]:test_area[1]],self.font_size,self.text_color,self.back_color,self.justify,(self.__coord[0]+self.margin,self.__coord[1]),self.transparent,True,self.font_type))
+            if test_area[1] == len(text_line)+1: break
+            test_area = [test_area[1],len(text_line)+1]
+        a = 0
+        c = 1
+        while len(self.__hold) > 1 and self.__hold[0][1].colliderect(self.__hold[1][1]):
+            a += 1
+            self.__hold[1][1].y += 1
+        a += 2
+        self.__hold[1][1].y += 2
+        for b in self.__hold[2:]:
+            c += 1
+            b[1].y += a*c
     def render(self):
-        for t in self.__text:
-            self.__hold.append(text_display(t,self.font_size,self.text_color,self.back_color,self.__justify,self.__coord,self.transparent,True,self.font_type))
+        if not self.transparent: pygame.draw.rect(self.__surface,self.back_color,self)
+        return self.__hold
