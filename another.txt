@@ -1,0 +1,17 @@
+when checking data:
+	if change (check whole line, and see if anything was added):  X
+		remove last line
+		use old range, but change end
+		run stuff
+		check spacing
+			1st line: do nothing
+			2nd line: check distance, save distance
+			2nd line and beyond: take the index and multiply 
+				by distance, and move down
+globals:
+	1st range value
+	full text
+	array of values
+	distance
+
+Do Stuff?
