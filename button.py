@@ -34,13 +34,13 @@ class Static_button(Button):
         self._hover = hover
         self._surface = surface
 
-    def checkClick(self):
+    def check_click(self):
         '''checks button for clicks. If clicked,
         returns key. Else, sends update command'''
         check = False
         getMouse = pygame.mouse.get_pos()
         getClick = pygame.mouse.get_pressed()[0]
-        print(getMouse)
+        #print(getMouse)
         if (self._rectangle.left < getMouse[0] < self._rectangle.right and
             self._rectangle.top < getMouse[1] < self._rectangle.bottom): check = True
         else: check = False
@@ -77,7 +77,7 @@ class Dynamic_button(Button):
         self._hover = hover
         self._surface = surface
 
-    def checkClick(self):
+    def check_click(self):
         '''checks button for clicks. If clicked,
         returns key. Else, sends update command'''
         check = False
@@ -107,7 +107,7 @@ class Dynamic_button_color(Dynamic_button):
     '''creates a new dynamic clickable box
     idle and hover are three-element tuples'''
     def __init__(self, coords, runkey, surface, idle_color, hover_color, w, h, w1, h1):
-        super().__init__(coords, runkey, surface, idle, hover)
+        super().__init__(coords, runkey, surface, idle_color, hover_color)
         self._rect0 = pygame.Rect(0, 0, w, h)
         self._rect1 = pygame.Rect(0, 0, w1, h1)
         self._rect0.center = self._coords
