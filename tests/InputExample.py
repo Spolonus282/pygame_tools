@@ -1,4 +1,4 @@
-import pygame, sys, NewText
+import pygame, sys, temp_text as text
 from pygame.locals import *
 
 pygame.init()
@@ -15,16 +15,16 @@ keys   = 'Input:'
 DISP.fill(WHITE)
 
 while True:
-    Objs = NewText.text_display(keys, 12, BLUE, WHITE, 'center', (200, 200))
-    keys = NewText.get_typed(keys, 200,['a'])
+    Objs = text.text_display(keys, 12, BLUE, WHITE, 'center', (200, 200))
+    keys = text.get_typed(keys, 200,['a'])
     if keys == 1:
         pygame.quit()
         sys.exit()
     m = 0
     #print(pygame.K_a)
     #print(pygame.event.get(NewText.HOTKEYEVENT))
-    for e in pygame.event.get(NewText.HOTKEYEVENT):
-        if e.value == K_a:
+    for e in pygame.event.get(text.HOTKEYEVENT):
+        if e.key == K_a:
             print('hi')
     DISP.fill(WHITE)
     DISP.blit(Objs[0], Objs[1])
