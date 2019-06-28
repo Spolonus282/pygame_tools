@@ -1,7 +1,7 @@
 '''Clickable button class'''
 import pygame, os.path
 pygame.init()
-missing = pygame.image.load(''.join([__file__[:-9],'images/missing.png']))
+missing = pygame.image.load(''.join([__file__.rstrip('button.py'),'images/missing.png']))
 
 class Button():
     'creates a new button'
