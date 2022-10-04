@@ -1,7 +1,7 @@
 '''Clickable button class'''
 import pygame, os.path
 pygame.init()
-missing = pygame.image.load(''.join([__file__[:-9],'images/missing.png']))
+missing = pygame.image.load(''.join([__file__.rstrip('button.pycw'),'images/missing.png']))
 
 class Button():
     'creates a new button'
@@ -58,6 +58,7 @@ class Static_button_color(Static_button):
     def update(self, checked):
         if checked: pygame.draw.rect(self._surface, self._hover, self._rectangle)
         else: pygame.draw.rect(self._surface, self._idle, self._rectangle)
+    
 
 class Static_button_image(Static_button):
     'creates a new clickable image'
@@ -69,6 +70,10 @@ class Static_button_image(Static_button):
     def update(self, checked):
         if checked: self._surface.blit(self._hover, self._rectangle)
         else: self._surface.blit(self._idle, self._rectangle)
+    
+    def send_blittables(self, checked):
+        if checked: return self._hover, self._rectangle
+        else: return self._idle, self._rectangle
 
 class Dynamic_button(Button):
     def __init__(self, coords, runkey, surface, idle=missing, hover=missing):
@@ -102,6 +107,10 @@ class Dynamic_button_image(Dynamic_button):
     def update(self, checked):
         if checked: self._surface.blit(self._hover, self._rect1)
         else: self._surface.blit(self._idle, self._rect0)
+    
+    def send_blittables(self, checked):
+        if checked: return self._hover, self._rect1
+        else: return self._idle, self._rect0
 
 class Dynamic_button_color(Dynamic_button):
     '''creates a new dynamic clickable box

@@ -1,5 +1,5 @@
 import pygame as _pygame
-from time import clock as _clock
+#from time import clock as _clock
 _pygame.init()
 
 __HasTyped = ''
@@ -87,9 +87,9 @@ def get_typed(Key, maxlen, hotkeys = []):
             _pygame.event.post(_pygame.event.Event(event.type,event.dict))
         __checkfor = False
     while len(Key) > maxlen: Key = Key[:-1]
-    if __lastBlink == 0: __lastBlink = _clock()
-    elif _clock() - __lastBlink >= 0.5:
-        __lastBlink = _clock()
+    if __lastBlink == 0: __lastBlink = _pygame.time.get_ticks()
+    elif _pygame.time.get_ticks() - __lastBlink >= 500:
+        __lastBlink = _pygame.time.get_ticks()
         _blink = not _blink
     if _blink: Key += '|'
     return Key
