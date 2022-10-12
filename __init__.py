@@ -1,3 +1,5 @@
+from . import button
+from . import text
+from . import animations
+
 __all__ = ['button','text','animations']
-from pygame_tools import *
-HOTKEYEVENT = 24

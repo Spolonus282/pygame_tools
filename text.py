@@ -1,181 +1,201 @@
 import pygame as _pygame
+from typing import Literal
 #from time import clock as _clock
 _pygame.init()
 
-__HasTyped = ''
-__Shifted = False
+__shifted = False
 __lastBlink = 0.0
-_blink = True
-#HOTKEYEVENT = 24
+__blink = True
 __checkfor = False
+
+__CHARACTERS = [ord(c) for c in ' `1234567890-=qwertyuiop[]\\asdfghjkl;\'zxcvbnm,./']
+__BLINK_DELAY = 500
+
+HOTKEYEVENT = 24
 
 _pygame.key.set_repeat(350, 45)
 
-def text_display(prompt, fontSize, color1, color2, justify, coord, transBack = False, antialiasing = True, fontType = 'freesansbold.ttf'):
-    'Display text'
-    if justify == 'left': justify = 'topleft'
-    elif justify == 'right': justify = 'topright'
-    fontObj = _pygame.font.Font(fontType, fontSize)
-    textObj = fontObj.render(prompt, antialiasing, color1, color2)
-    if transBack: textObj.set_colorkey(color2)
-    rectObj = textObj.get_rect()
-    if justify == 'center':
-        rectObj.center = coord
-    elif justify == 'topleft':
-        rectObj.topleft = coord
-    elif justify == 'topright':
-        rectObj.topright = coord
-    elif justify == 'bottomleft':
-        rectObj.bottomleft = coord
-    elif justify == 'bottomright':
-        rectObj.bottomright = coord
+class Text_line():
+    __DEFAULT_FONT_TYPE = 'freesansbold.ttf'
+    __DEFAULT_FONT_SIZE = 8
+    __DEFAULT_FONT = _pygame.font.Font(__DEFAULT_FONT_TYPE, __DEFAULT_FONT_SIZE)
 
-    return [textObj, rectObj]
+    def __init__(self, **kwargs) -> None:
+        self.__text = kwargs.get('prompt', '')
+        self.__font_size = kwargs.get('font_size', None)
+        self.__font_type = kwargs.get('font_type', None)
+        self.__text_color = kwargs.get('text_color', (0,0,0))
+        self.__antialiasing = kwargs.get('antialiasing', True)
+        self.__background: tuple[int, int, int] | None = kwargs.get('background', None)
+        self.__coord: tuple[int, int] = kwargs.get('coord', (0,0))
+        self.__justify: str = kwargs.get('justify', 'left')
 
-def get_typed(Key, maxlen, hotkeys = []):
-    'Check for typed input. if any hotkeys, specify letter after ctrl\neg ctrl a -> hotkeys = [\'a\']'
-    global __Shifted,__lastBlink,_blink,__checkfor
-    if Key == '|':
-        Key = ''
-    elif Key != '' and Key[-1] == '|':
-        Key = Key[:-1]
-    for event in _pygame.event.get([_pygame.KEYDOWN,_pygame.KEYUP]):
-        #print(event.key)
-        if event.key in [_pygame.K_LCTRL,_pygame.K_RCTRL] and __checkfor and event.type == _pygame.KEYUP:
-            __checkfor = False
-            continue
-        elif chr(event.key) in hotkeys and __checkfor:
-            _pygame.event.post(_pygame.event.Event(HOTKEYEVENT,{'key':event.key}))
-            #print('hoi')
-            continue
-        elif event.key in [_pygame.K_LCTRL,_pygame.K_RCTRL] and event.type == _pygame.KEYDOWN:
-            #_pygame.event.post(_pygame.event.Event(_pygame.KEYDOWN,{'key':event.key}))
-            __checkfor = True
-            continue
-        if event.key in [_pygame.K_LSHIFT,_pygame.K_RSHIFT] and event.type == _pygame.KEYDOWN: __Shifted = True
-        elif event.key in [_pygame.K_LSHIFT,_pygame.K_RSHIFT] and event.type == _pygame.KEYUP: __Shifted = False
-        elif event.key == _pygame.K_RETURN: return 1
-        elif event.key == _pygame.K_BACKSPACE and event.type == _pygame.KEYDOWN and Key != []: Key = Key[:-1]
-        elif event.key == _pygame.K_CAPSLOCK and event.type == _pygame.KEYDOWN:pass
-        #elif event.key == _pygame.K_ESCAPE: continue
+        self.__font_obj = None
 
-        elif not __Shifted and event.type == _pygame.KEYDOWN and chr(event.key) in ' `1234567890-=qwertyuiop[]\\asdfghjkl;\'zxcvbnm,./': Key += chr(event.key)
-        elif __Shifted and event.type == _pygame.KEYDOWN:
-            if _pygame.K_a <= event.key <= _pygame.K_z: Key += chr(event.key - 32)
-            elif event.key == _pygame.K_BACKQUOTE: Key += '~'
-            elif event.key == _pygame.K_1: Key += '!'
-            elif event.key == _pygame.K_2: Key += '@'
-            elif event.key == _pygame.K_3: Key += '#'
-            elif event.key == _pygame.K_4: Key += '$'
-            elif event.key == _pygame.K_5: Key += '%'
-            elif event.key == _pygame.K_6: Key += '^'
-            elif event.key == _pygame.K_7: Key += '&'
-            elif event.key == _pygame.K_8: Key += '*'
-            elif event.key == _pygame.K_9: Key += '('
-            elif event.key == _pygame.K_0: Key += ')'
-            elif event.key == _pygame.K_MINUS: Key += '_'
-            elif event.key == _pygame.K_EQUALS: Key += '+'
-            elif event.key == _pygame.K_LEFTBRACKET: Key += '{'
-            elif event.key == _pygame.K_RIGHTBRACKET: Key += '}'
-            elif event.key == _pygame.K_BACKSLASH: Key += '|'
-            elif event.key == _pygame.K_SEMICOLON: Key += ':'
-            elif event.key == _pygame.K_QUOTE: Key += '"'
-            elif event.key == _pygame.K_COMMA: Key += '<'
-            elif event.key == _pygame.K_PERIOD: Key += '>'
-            elif event.key == _pygame.K_SLASH: Key += '?'
+        if self.__font_size is not None: use_size = self.__font_size
+        else: use_size = self.__DEFAULT_FONT_SIZE
+
+        if self.__font_type is not None: use_type = self.__font_type
+        else: use_type = self.__DEFAULT_FONT_TYPE
+
+        if any([self.__font_size, self.__font_type]):
+            self.__font = _pygame.font.Font(use_type, use_size)
         else:
-            _pygame.event.post(_pygame.event.Event(event.type,event.dict))
-        __checkfor = False
-    while len(Key) > maxlen: Key = Key[:-1]
-    if __lastBlink == 0: __lastBlink = _pygame.time.get_ticks()
-    elif _pygame.time.get_ticks() - __lastBlink >= 500:
-        __lastBlink = _pygame.time.get_ticks()
-        _blink = not _blink
-    if _blink: Key += '|'
-    return Key
+            self.__font = None
 
-def get_typed_numeric(Key, maxlen):
-    'Check for typed numbers and operations'
-    if not isinstance(Key, str):
-        raise TypeError('Key must be type str')
-    if not isinstance(maxlen, int):
-        raise TypeError('maxlen must be type int')
-    Keys = _pygame.key.get_pressed()
-    global __HasTyped
-    if not any(Keys): __HasTyped = False
-    if __HasTyped: return Key
-    if any(Keys): __HasTyped = True
-    if Keys[_pygame.K_LSHIFT] or Keys[_pygame.K_RSHIFT]: Shifted = True
-    if Keys[_pygame.K_RETURN]: return 1
-    if Keys[_pygame.K_BACKSPACE] and not HasTyped[_pygame.K_BACKSPACE]: Key = Key[:-1]
-    if not Shifted:
-        if Keys[_pygame.K_1] and not HasTyped[_pygame.K_1]: Key += '1'
-        elif Keys[_pygame.K_2] and not HasTyped[_pygame.K_2]: Key += '2'
-        elif Keys[_pygame.K_3] and not HasTyped[_pygame.K_3]: Key += '3'
-        elif Keys[_pygame.K_4] and not HasTyped[_pygame.K_4]: Key += '4'
-        elif Keys[_pygame.K_5] and not HasTyped[_pygame.K_5]: Key += '5'
-        elif Keys[_pygame.K_6] and not HasTyped[_pygame.K_6]: Key += '6'
-        elif Keys[_pygame.K_7] and not HasTyped[_pygame.K_7]: Key += '7'
-        elif Keys[_pygame.K_8] and not HasTyped[_pygame.K_8]: Key += '8'
-        elif Keys[_pygame.K_9] and not HasTyped[_pygame.K_9]: Key += '9'
-        elif Keys[_pygame.K_0] and not HasTyped[_pygame.K_0]: Key += '0'
-        elif Keys[_pygame.K_MINUS] and not HasTyped[_pygame.K_MINUS]: Key += '-'
-        elif Keys[_pygame.K_EQUALS] and not HasTyped[_pygame.K_EQUALS]: Key += '='
-        elif Keys[_pygame.K_PERIOD] and not HasTyped[_pygame.K_PERIOD]: Key += '.'
-        elif Keys[_pygame.K_SLASH] and not HasTyped[_pygame.K_SLASH]: Key += '/'
-    elif Shifted:
-        if Keys[_pygame.K_5] and not HasTyped[_pygame.K_5]: Key += '%'
-        elif Keys[_pygame.K_8] and not HasTyped[_pygame.K_8]: Key += '*'
-        elif Keys[_pygame.K_9] and not HasTyped[_pygame.K_9]: Key += '('
-        elif Keys[_pygame.K_0] and not HasTyped[_pygame.K_0]: Key += ')'
-        elif Keys[_pygame.K_EQUALS] and not HasTyped[_pygame.K_EQUALS]: Key += '+'
-        elif Keys[_pygame.K_COMMA] and not HasTyped[_pygame.K_COMMA]: Key += '<'
-        elif Keys[_pygame.K_PERIOD] and not HasTyped[_pygame.K_PERIOD]: Key += '>'
+    @staticmethod
+    def set_default_font(font_type: str=__DEFAULT_FONT_TYPE, font_size: int=__DEFAULT_FONT_SIZE):
+        Text_line.__DEFAULT_FONT_TYPE = font_type
+        Text_line.__DEFAULT_FONT_SIZE = font_size
+        Text_line.__DEFAULT_FONT = _pygame.font.Font(font_type, font_size)
+    
+    def set_font(self, font_type: str=__DEFAULT_FONT_TYPE, font_size: int=__DEFAULT_FONT_SIZE):
+        self.__font_type = font_type
+        self.__font_size = font_size
+        self.__font = _pygame.font.Font(font_type, font_size)
 
-    while len(Key) > maxlen: Key = Key[:-1]
-    __HasTyped = Keys
-    return Key
+    @property
+    def text(self) -> str:
+        return self.__text
+    
+    @text.setter
+    def text(self, prompt: str):
+        self.__text = prompt
+
+    def render(self, alternate_prompt: str | None=None) -> _pygame.surface.Surface:
+        use_font = self.__font if self.__font is not None else self.__DEFAULT_FONT
+        use_text = alternate_prompt if alternate_prompt is not None else self.__text
+        
+        self.__font_obj = use_font.render(use_text, self.__antialiasing, self.__text_color, self.__background)
+
+        return self.__font_obj
+    
+    def place(self, location: tuple[int, int] | None=None, justify: str | None=None, surface: _pygame.surface.Surface | None=None) -> tuple[_pygame.surface.Surface, _pygame.rect.Rect]:
+        use_coord = location if location is not None else self.__coord
+        use_justify = justify if justify is not None else self.__justify
+
+        if self.__font_obj is None:
+            self.render()
+
+        assert self.__font_obj is not None
+        text_rect = self.__font_obj.get_rect()
+
+        match use_justify:
+            case 'center':
+                text_rect.center = use_coord
+            case 'topleft' | 'left':
+                text_rect.topleft = use_coord
+            case 'topright' | 'right':
+                text_rect.topright = use_coord
+            case 'bottomleft':
+                text_rect.bottomleft = use_coord
+            case 'bottomright':
+                text_rect.bottomright = use_coord
+
+        if surface:
+            surface.blit(self.__font_obj, text_rect)
+
+        return (self.__font_obj, text_rect)
+
+    @staticmethod
+    def static_text_display(prompt, fontSize, color1, color2, justify, coord, transBack = False, antialiasing = True, fontType = 'freesansbold.ttf') -> tuple[_pygame.surface.Surface, _pygame.rect.Rect]:
+        background = color2 if transBack else None
+
+        line = Text_line(prompt=prompt, font_size=fontSize, text_color=color1, background=background, justify=justify, coord=coord, antialiasing=antialiasing, font_type=fontType)
+
+        return line.place()
+
+def get_typed(start_string: str, maxlen: int, *, hotkeys: list[int] = [], ignore: list[int] = []) -> str | Literal[1]:
+    '''
+    Check for typed input.\n
+    Hotkeys will trigger when ctrl is held and releases a HOTKEYEVENT\n
+    (Due to Python's limitations, the character 'c' cannot be used as a hotkey)
+    '''
+    global __shifted,__checkfor
+
+    for event in _pygame.event.get([_pygame.KEYDOWN, _pygame.KEYUP]):
+
+        match event.key:
+            case _ if event.key in ignore: _pygame.event.post(event)
+
+            case _pygame.K_LCTRL | _pygame.K_RCTRL: __checkfor = event.type == _pygame.KEYDOWN
+            case _pygame.K_LSHIFT | _pygame.K_RSHIFT: __shifted = event.type == _pygame.KEYDOWN
+
+            case _ if event.type == _pygame.KEYUP: pass
+
+            case _ if event.key in hotkeys and __checkfor: _pygame.event.post(_pygame.event.Event(HOTKEYEVENT,{'key':event.key}))
+
+            case _pygame.K_RETURN: return 1
+            case _pygame.K_BACKSPACE if start_string != []: start_string = start_string[:-1]
+            case _pygame.K_CAPSLOCK: pass
+            case _pygame.K_ESCAPE: pass
+
+            case _ if event.key in __CHARACTERS and not __shifted: start_string += chr(event.key)
+            case _ if _pygame.K_a <= event.key <= _pygame.K_z: start_string += chr(event.key - 32)
+
+            case _pygame.K_BACKQUOTE: start_string += '~'
+            case _pygame.K_1: start_string += '!'
+            case _pygame.K_2: start_string += '@'
+            case _pygame.K_3: start_string += '#'
+            case _pygame.K_4: start_string += '$'
+            case _pygame.K_5: start_string += '%'
+            case _pygame.K_6: start_string += '^'
+            case _pygame.K_7: start_string += '&'
+            case _pygame.K_8: start_string += '*'
+            case _pygame.K_9: start_string += '('
+            case _pygame.K_0: start_string += ')'
+            case _pygame.K_MINUS: start_string += '_'
+            case _pygame.K_EQUALS: start_string += '+'
+            case _pygame.K_LEFTBRACKET: start_string += '{'
+            case _pygame.K_RIGHTBRACKET: start_string += '}'
+            case _pygame.K_BACKSLASH: start_string += '|'
+            case _pygame.K_SEMICOLON: start_string += ':'
+            case _pygame.K_QUOTE: start_string += '"'
+            case _pygame.K_COMMA: start_string += '<'
+            case _pygame.K_PERIOD: start_string += '>'
+            case _pygame.K_SLASH: start_string += '?'
+
+    start_string = start_string[:maxlen]
+
+    return start_string
+
+def add_type_bar():
+    global __lastBlink, __blink
+    current = _pygame.time.get_ticks()
+    if __lastBlink == 0 or current - __lastBlink >= __BLINK_DELAY:
+        __lastBlink = current
+        __blink = not __blink
+    if __blink: 
+        return '|'
+    return ''
 
 class Text_box(_pygame.Rect):
     '''Hold a collection of text in one area.'''
-    def __init__(self, coords, bounds, surface):
+    def __init__(self, coords, bounds, surface, **design_kwargs):
         self.__surface = surface
+
         #text design values
         self.__coord = (coords[0], coords[1])
-        self.margin = 10
-        self.justify = 'left'
-        self.text_color = (0,0,0)
-        self.back_color = (255,255,255)
-        self.font_size = 8
-        self.font_type = 'freesansbold.ttf'
-        self.transparent = False
-        self.antialiasing = True
-        self.spacing = 5
+        self.margin = design_kwargs.get('margin', 10)
+        self.justify = design_kwargs.get('justify', 'left')
+        self.text_color = design_kwargs.get('text_color', (0,0,0))
+        self.back_color = design_kwargs.get('back_color', (255,255,255))
+        self.font_size = design_kwargs.get('font_size', 8)
+        self.font_type = design_kwargs.get('font_type', 'freesansbold.ttf')
+        self.transparent = design_kwargs.get('transparent', False)
+        self.antialiasing = design_kwargs.get('antialiasing', True)
+        self.spacing = design_kwargs.get('spacing', 5)
+
         #text rendering values
-        self.__text_obj = _pygame.font.Font(self.font_type,self.font_size)
         self.__line_length = 0
         self.__collide = 0
         self.__hold = ['']
         self.__text = ''
         self.__test_area = [0,0]
-        self.__al_lengths_small = {chr(t):self.__text_obj.size(chr(t))[0] for t in range(97,123)}
-        self.__al_lengths_big = {chr(T):self.__text_obj.size(chr(T))[0] for T in range(65, 91)}
-        self.__num_lengths = {chr(n):self.__text_obj.size(chr(n))[0] for n in range(48, 58)}
-        self.__symbol_lengths = {'`':self.__text_obj.size('`')[0], '~':self.__text_obj.size('~')[0], '!':self.__text_obj.size('!')[0],
-                                 '@':self.__text_obj.size('@')[0], '#':self.__text_obj.size('#')[0], '$':self.__text_obj.size('$')[0],
-                                 '%':self.__text_obj.size('%')[0], '^':self.__text_obj.size('^')[0], '&':self.__text_obj.size('&')[0],
-                                 '*':self.__text_obj.size('*')[0], '(':self.__text_obj.size('(')[0], ')':self.__text_obj.size(')')[0],
-                                 '-':self.__text_obj.size('-')[0], '_':self.__text_obj.size('_')[0], '=':self.__text_obj.size('=')[0],
-                                 '+':self.__text_obj.size('+')[0], '[':self.__text_obj.size('[')[0], '{':self.__text_obj.size('{')[0],
-                                 ']':self.__text_obj.size(']')[0], '}':self.__text_obj.size('}')[0], '\\':self.__text_obj.size('\\')[0],
-                                 '|':self.__text_obj.size('|')[0], ';':self.__text_obj.size(';')[0], ':':self.__text_obj.size(':')[0],
-                                 "'":self.__text_obj.size("'")[0], '"':self.__text_obj.size('"')[0], ',':self.__text_obj.size(',')[0],
-                                 '<':self.__text_obj.size('<')[0], '.':self.__text_obj.size('.')[0], '>':self.__text_obj.size('>')[0],
-                                 '/':self.__text_obj.size('/')[0], '?':self.__text_obj.size('?')[0], ' ':self.__text_obj.size(' ')[0]}
-        self.__character_height = self.__text_obj.size('W')[1]
-
+        self.__calc_lengths()
         super().__init__(coords, bounds)
-    def calc_lengths(self):
+
+    def __calc_lengths(self):
         self.__text_obj = _pygame.font.Font(self.font_type,self.font_size)
         self.__al_lengths_small = {chr(t):self.__text_obj.size(chr(t))[0] for t in range(97,123)}
         self.__al_lengths_big = {chr(T):self.__text_obj.size(chr(T))[0] for T in range(65, 91)}
@@ -192,16 +212,17 @@ class Text_box(_pygame.Rect):
                                  '<':self.__text_obj.size('<')[0], '.':self.__text_obj.size('.')[0], '>':self.__text_obj.size('>')[0],
                                  '/':self.__text_obj.size('/')[0], '?':self.__text_obj.size('?')[0], ' ':self.__text_obj.size(' ')[0]}
         self.__character_height = self.__text_obj.size('W')[1]
+
     def add_text(self, text_line):
         '''add one long string of text, and it will be auto-formatted'''
         #print(text_line)
         if text_line == '' or text_line == self.__text:
-            self.__hold = [text_display('',self.font_size,self.text_color,self.back_color,self.justify,(self.__coord[0]+self.margin,self.__coord[1]),self.transparent,self.antialiasing,self.font_type)]
+            self.__hold = [Text_line.static_text_display('',self.font_size,self.text_color,self.back_color,self.justify,(self.__coord[0]+self.margin,self.__coord[1]),self.transparent,self.antialiasing,self.font_type)]
             return #empty string, no update
-        if text_line == '|' and _blink:
-            self.__hold = [text_display('|',self.font_size,self.text_color,self.back_color,self.justify,(self.__coord[0]+self.margin,self.__coord[1]),self.transparent,self.antialiasing,self.font_type)]
+        if text_line == '|' and __blink:
+            self.__hold = [Text_line.static_text_display('|',self.font_size,self.text_color,self.back_color,self.justify,(self.__coord[0]+self.margin,self.__coord[1]),self.transparent,self.antialiasing,self.font_type)]
             return#empty string with style, no update
-        if _blink and text_line[-1] == '|': text_use = text_line[:-1]
+        if __blink and text_line[-1] == '|': text_use = text_line[:-1]
         else: text_use = text_line
         self.__hold = []
         temp2 = []
@@ -238,11 +259,11 @@ class Text_box(_pygame.Rect):
             if end != len(text_use)-1: end = cutback
             #print(end)
         #print(temp2)
-        if _blink:
+        if __blink:
             #print(temp2)
             temp2[-1] += '|'
         for t in temp2:
-            self.__hold.append(text_display(t,self.font_size,self.text_color,self.back_color,self.justify,(self.__coord[0]+self.margin,self.__coord[1]),self.transparent,self.antialiasing,self.font_type))
+            self.__hold.append(Text_line.static_text_display(t,self.font_size,self.text_color,self.back_color,self.justify,(self.__coord[0]+self.margin,self.__coord[1]),self.transparent,self.antialiasing,self.font_type))
         #print('tick')
         for h in range(len(self.__hold)):
             self.__hold[h][1].centery += h*(self.__character_height + self.spacing)
